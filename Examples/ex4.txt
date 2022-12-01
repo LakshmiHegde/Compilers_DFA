@@ -1,0 +1,11 @@
+num fun(num y, num z)
+{
+	loop(true)
+	{
+		if(y) then y=y+1 else y=y+2
+		x=1
+		y=1
+	}
+	x=y+2*x
+	
+}

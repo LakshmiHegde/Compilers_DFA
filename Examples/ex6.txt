@@ -1,0 +1,11 @@
+num def(num x)
+{
+	a=5
+	c=1
+	loop(true)
+	{
+		c=c+c
+	}
+	a=c*a
+	c=0
+}

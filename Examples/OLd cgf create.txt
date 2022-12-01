@@ -1,0 +1,289 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class CFGNode{
+    int node_number;
+    CFGNode exit;
+    String statements;
+    CFGNode refToFirst;
+    CFGNode exitNode; //if condition is false in while condition , then take this as next statement
+    CFGNode()
+    {
+
+    }
+    CFGNode(String stat, int node_number)
+    {
+        statements=stat;
+        this.node_number=node_number;
+        exit=null;
+    }
+
+}
+class DecisionNode extends CFGNode{
+    CFGNode ifNode;
+    CFGNode elseNode;
+    String predicate;
+    DecisionNode(){
+    }
+    DecisionNode(IfCondition ifCond)
+    {
+        predicate = ifCond.pred.toString();
+        ifNode= new CFGNode(ifCond.e1.toString(), ++CFG_Create.countNodes);
+        elseNode= new CFGNode(ifCond.e2.toString(),++CFG_Create.countNodes);
+        exit=new CFGNode();
+        refToFirst = null;
+        //ifNode.exit = elseNode.exit = exit;
+        //System.out.println(predicate+"  "+ifNode.statements+"   "+elseNode.statements);
+    }
+
+}
+
+class LoopNode extends CFGNode{
+
+    CFGNode entry; //predicate node
+
+
+    LoopNode(){
+    }
+    LoopNode(Loop loop )
+    {
+        entry=new CFGNode(loop.pred.toString() , ++CFG_Create.countNodes);
+        node_number= entry.node_number;//add node number of entry node, as a node number here
+        //CFGNode temp=entry.exit;
+        CFGNode  temp=entry;
+        System.out.println("loop started, entry= "+entry);
+        exit = new CFGNode();
+
+        for(LoopSubBlock lsb: loop.ls.subStatements)
+        {
+            //System.out.println(lsb.getClass().getName());
+            if(lsb instanceof Assign)
+            {
+                temp.exit = new CFGNode(((Assign)lsb).toString(), ++CFG_Create.countNodes);
+                //System.out.println("loop assign current "+temp);
+                temp=temp.exit;
+                //System.out.println("after "+temp);
+            }
+            else if(lsb instanceof IfCondition){
+                DecisionNode dn = new DecisionNode((IfCondition) lsb);
+                temp.exit=dn;
+                //System.out.println("loop if current "+temp);
+                temp=temp.exit;
+                dn.ifNode.exit = dn.elseNode.exit = temp;
+                //System.out.println("\n\n ---------------------------------------------Inside, "+(dn.ifNode.exit == temp) + " " +(dn.elseNode.exit == temp)+(dn.exit == temp)+"------------------\n\n");
+
+                //System.out.println("after "+temp);
+            }
+
+        }
+
+
+        System.out.println(temp.refToFirst);
+        temp.refToFirst= entry;
+        System.out.println("loop ended "+ (temp.refToFirst == entry) +"  "+temp+"  "+temp.refToFirst+"  "+entry);
+    }
+    public void display()
+    {
+        CFGNode temp=entry;
+        //System.out.println(temp.refToFirst);
+        System.out.println("ref to first "+temp.refToFirst);
+
+        while(temp.refToFirst == null )
+        {
+            //System.out.println("node "+temp.getClass().getName());
+            if (temp instanceof DecisionNode)
+            {
+                System.out.println("\nLoop if current "+temp);
+                System.out.println("\n\nDec node , if "
+                        + ((DecisionNode)temp).statements+ " if, "
+                        +((DecisionNode)temp).ifNode.node_number+" "
+                        +  ((DecisionNode)temp).ifNode.statements + " else "
+                        +((DecisionNode)temp).elseNode.node_number+ "  "
+                        +  ((DecisionNode)temp).elseNode.statements);
+
+                //System.out.println(((DecisionNode)temp).exit.getClass().getName());
+
+                temp = ((DecisionNode)temp).exit;
+                //System.out.println(temp.getClass().getName());
+                System.out.println("\nNext node "+temp);
+
+            }
+            else if(temp instanceof CFGNode)
+            {
+                System.out.println("Loop cfg current "+temp);
+                System.out.println("CFG node : "+temp.node_number+"  "+temp.statements);
+                temp= temp.exit;
+                System.out.println("\nNext node "+temp);
+            }
+            //System.out.println("Loop Next node "+temp);
+
+
+        }
+        //last node
+        //System.out.println("Loop ended");
+        if (temp instanceof DecisionNode)
+        {
+            System.out.println("Dec node , if "
+                    + ((DecisionNode)temp).statements+ " if, "
+                    +((DecisionNode)temp).ifNode.node_number+" "
+                    +  ((DecisionNode)temp).ifNode.statements + " else "
+                    +((DecisionNode)temp).elseNode.node_number+ "  "
+                    +  ((DecisionNode)temp).elseNode.statements);
+
+            //System.out.println(((DecisionNode)temp).exit.getClass().getName());
+            temp = ((DecisionNode)temp).exit;
+
+        }
+        if(temp instanceof CFGNode)
+        {
+            System.out.println("CFG node : "+temp.node_number+"  "+temp.statements);
+            temp= temp.exit;
+        }
+
+        System.out.println("\n\n Done loop, next node "+temp );
+
+    }
+
+}
+
+public class CFG_Create {
+    public static int countNodes=0;
+    CFGNode root=null , temp=null;
+
+    public void create(FunctionDeclaration function)
+    {
+        for(Declaration d : function.declarationList)
+        {
+            if(root == null)
+            {
+                root= new CFGNode(d.toString() , ++countNodes);
+                temp=root;
+                continue;
+            }
+            root.exit = new CFGNode(d.toString() , ++countNodes);
+            root = root.exit;
+            System.out.println(d.toString());
+        }
+
+        bodyCreate(function.body,root);
+        root = temp;
+        System.out.println("\n\n nodes= "+countNodes + "  "+root +"  \n\n");
+    }
+
+    public void bodyCreate(FunctionBody body,CFGNode root)
+    {
+        blockCreate(body.block,root);
+    }
+
+    public void blockCreate(Block block,CFGNode root)
+    {
+
+        if(block.declarationList == null)
+        {
+            sequenceCreate(block.seq,root);
+            return;
+        }
+        for(Declaration d : block.declarationList)
+        {
+            root.exit = new CFGNode(d.toString() , ++countNodes);
+            //System.out.println("current decl list "+root);
+            root = root.exit;
+            //System.out.println("after decl list "+root);
+        }
+        sequenceCreate(block.seq,root);
+        return;
+    }
+
+    public void sequenceCreate(Sequence seq,CFGNode root)
+    {
+        for(Instruction i : seq.instr)
+        {
+            if(i instanceof Assign)
+            {
+                root.exit = new CFGNode(i.toString() , ++countNodes);
+                //System.out.println("\n\nassign "+root);
+                root= root.exit;
+                //System.out.println("after "+root);
+
+            }
+            else if(i instanceof Return)
+            {
+                root.exit= new CFGNode(i.toString() , ++countNodes);
+                //System.out.println("\n\nreturn "+root);
+                root=root.exit;
+                //System.out.println("after "+root);
+
+            }
+            else if(i instanceof IfCondition)
+            {
+                DecisionNode ifN= new DecisionNode((IfCondition) i);
+                root.exit =ifN;
+                //System.out.println("\n\nif "+root);
+                root = root.exit;
+                ifN.ifNode.exit = ifN.elseNode.exit = root;
+                //System.out.println("\n\n ---------------------------------------------Inside, "+(ifN.ifNode.exit == temp) + " " +(ifN.elseNode.exit == temp)+(ifN.exit == temp)+"------------------\n\n");
+                //System.out.println("after "+root);
+
+            }
+            else if(i instanceof Loop)
+            {
+
+                LoopNode loopNode= new LoopNode((Loop) i);
+                root.exit = loopNode;
+                //System.out.println("\n\nloop node "+root);
+                root = root.exit;
+                loopNode.entry.exitNode = root.exit; //exit node when condition is false.Add it as part of entry node.
+                //System.out.println("after "+root);
+            }
+        }
+
+    }
+
+    public void display()
+    {
+
+        CFGNode temp =root;
+        if(root == null)
+            return;
+
+
+        while(root != null)
+        {
+            //System.out.println("root "+root);
+            if (root instanceof DecisionNode)
+            {
+                System.out.println("if current "+root);
+                System.out.println("\n\nDec node "
+                        + ((DecisionNode)root).statements+ " if, "
+                        +((DecisionNode)root).ifNode.node_number+ "  "
+                        +  ((DecisionNode)root).ifNode.statements + " else, "
+                        +((DecisionNode)root).elseNode.node_number+ "  "
+                        +  ((DecisionNode)root).elseNode.statements);
+
+                System.out.println(((DecisionNode)root).exit.getClass().getName());
+                root = ((DecisionNode)root).exit;
+
+            }
+
+            else if ( root instanceof LoopNode)
+            {
+                System.out.println("\n\nLoop current "+root);
+                ((LoopNode)root).display();
+                root = ((LoopNode)root).exit;
+
+            }
+
+            else if(root instanceof CFGNode)
+            {
+                System.out.println("\n\ncfg current "+root);
+                System.out.println("\nCFG node : "+root.node_number+"   "+root.statements);
+                root = root.exit;
+            }
+
+            System.out.println("next node "+root+"\n\n");
+        }
+        root=temp;
+    }
+
+}
+

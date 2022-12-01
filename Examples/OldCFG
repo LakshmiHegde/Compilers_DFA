@@ -1,0 +1,104 @@
+import java.util.*;
+class Node
+{
+	public Node left,right;
+	public List<String> statements;
+	Node()
+	{
+		left=null;
+		right=null;
+		statements= new ArrayList<>();
+	}
+	public String toString()
+	{
+		String s="";
+		for(String str:statements)
+			s+= str;
+		return s;
+	}
+}
+
+class CFG
+{
+	FunctionDeclaration fun;
+	Node root;
+	
+	CFG(FunctionDeclaration fun)
+	{
+		this.fun = fun;
+		root = new Node();
+		Node temp= root;
+		generate(fun, temp);
+	}
+	
+	public void generate(FunctionDeclaration fun, Node root)
+	{
+		for(Declaration d : fun.declarationList) 
+		{
+      			root.statements.add(d.toString() );
+		}
+		generateBody(fun.body , root);	
+	}
+	
+	public void generateBody(FunctionBody body, Node root)
+	{
+		generateBlock(body.block, root);
+	}
+	
+	public void generateBlock(Block block, Node root)
+	{
+		if(block.declarationList == null)
+    		{	
+    			generateSeq(block.seq, root);
+    			return;
+    		}
+		for(Declaration d : block.declarationList) 
+		{
+      			root.statements.add(d.toString() );
+		}
+		generateSeq(block.seq, root);
+	}
+	
+	public void generateSeq(Sequence seq, Node root)
+	{
+		
+		for(Instruction i:seq.instr) 
+		{
+      			if(i instanceof Assign)
+      				root.statements.add(i.toString());
+      			else if(i instanceof Return)
+      				root.statements.add(i.toString());
+      			else if(i instanceof IfCondition)
+      			{
+      				
+      				root.left =  new Node();
+      				root= root.left;
+      				root = generateIf( (IfCondition)i , root);
+      			}
+		}
+	}
+	
+	public static Node generateIf(IfCondition i, Node root)
+	{
+		
+		root.statements.add(i.pred.toString());
+		root.left=new Node();
+		root.right=new Node();
+		root.left.statements.add(i.e1.toString());
+		root.right.statements.add(i.e2.toString());
+		Node temp=new Node();
+		root.left.left = temp;
+		root.right.left=temp;
+		return temp;
+	}
+	
+	static public void inorder(Node root)
+	{
+		if(root == null)
+			return;
+		inorder(root.left);
+		System.out.println("node:    --------\n"+root);
+		inorder(root.right);
+	}
+	
+}
