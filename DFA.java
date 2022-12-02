@@ -1,19 +1,124 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public class DFA {
-    ArrayList<CFGNode>[] predecessor;
-    HashMap<String,ArrayList<Integer>>[] in , out;
-
-    DFA(int nodes)
+    ArrayList<CFGNode>[] predecessor, successor;
+    DFA(ArrayList<CFGNode>[] predecessor, ArrayList<CFGNode>[] successor )
     {
-        predecessor= new ArrayList[nodes+1];
+        this.predecessor = predecessor;
+        this.successor = successor;
+    }
 
-        for (int i=0;i<=nodes;i++)
-            predecessor[i] = new ArrayList<>();
 
+    public static <T> ArrayList<T> removeDuplicates(ArrayList<T> list)
+    {
+
+        ArrayList<T> newList = new ArrayList<T>();
+
+        for (T element : list) {
+            if (!newList.contains(element)) {
+
+                newList.add(element);
+            }
+        }
+
+        return newList;
+    }
+
+
+    public boolean checkIfEquals(HashMap<String, ArrayList<Integer>>[] m1 , HashMap<String, ArrayList<Integer>>[] m2)
+    {
+        int eq=1;
+        for(int i=0; i<m1.length; i++)
+        {
+            HashMap<String, ArrayList<Integer>> first = m1[i];
+            HashMap<String, ArrayList<Integer>> second = m2[i];
+
+            if(!first.equals(second))
+            {
+                eq=0;
+                break;
+            }
+        }
+        if(eq == 1)
+            return true;
+        return false;
+    }
+
+
+    public void expr_use(Expr e1, Expr e2, ArrayList<String> use)
+    {
+        if(e1 instanceof IdExpr)
+        {
+            use.add(e1.toString());
+        }
+        else {
+            if(e1 instanceof AddExpr)
+            {
+                expr_use(((AddExpr)e1).left , ((AddExpr)e1).right , use);
+            }
+            else if(e1 instanceof MulExpr)
+            {
+                expr_use(((MulExpr)e1).left , ((MulExpr)e1).right , use);
+            }
+        }
+
+        if(e2 instanceof IdExpr)
+        {
+            use.add(e2.toString());
+        }
+        else{
+            if(e2 instanceof AddExpr)
+            {
+                expr_use(((AddExpr)e2).left , ((AddExpr)e2).right , use);
+            }
+            else if(e2 instanceof MulExpr)
+            {
+                expr_use(((MulExpr)e2).left , ((MulExpr)e2).right , use);
+            }
+        }
+
+
+
+    }
+
+    public boolean arrayEquals(ArrayList<String >[] a1, ArrayList<String>[] a2)
+    {
+        int[] c1;
+        int[] c2;
+
+        for (int i=1;i<a1.length;i++)
+        {
+            c1=new int[256];
+            c2=new int[256];
+
+
+            if(a1[i].size() != a2[i].size())
+                return false;
+
+            for(int j=0;j<a1[i].size();j++)
+            {
+                c1[a1[i].get(j).charAt(0) - 'a']++;
+                c2[a2[i].get(j).charAt(0) - 'a']++;
+            }
+
+            for(int k=0;k<256;k++)
+            {
+                if(c1[k] != c2[k])
+                    return false;
+            }
+        }
+
+        return true;
+
+    }
+}
+
+
+
+class ReachingDefinitions extends DFA{
+    HashMap<String,ArrayList<Integer>>[] in , out;
+    ReachingDefinitions(int nodes, ArrayList<CFGNode>[] predecessor, ArrayList<CFGNode>[] successor){
+        super(predecessor, successor );
         in = new HashMap[nodes+1];
         out= new HashMap[nodes+1];
 
@@ -22,284 +127,6 @@ public class DFA {
             in[i] = new HashMap<>();
             out[i] = new HashMap<>();
         }
-
-    }
-
-    public void get_pred_succ(CFGNode root)
-    {
-        while(root.exit != null)
-        {
-            if(root instanceof DecisionNode)
-            {
-                System.out.println("current node is dec node ");
-                if(root.exit instanceof DecisionNode)
-                {
-                    System.out.println("Next is dec node ");
-                    predecessor[((DecisionNode) root.exit).ifNode.node_number].add((DecisionNode) ((DecisionNode) root).ifNode);
-                    predecessor[((DecisionNode) root.exit).elseNode.node_number].add((DecisionNode) ((DecisionNode) root).ifNode);
-
-                    predecessor[((DecisionNode) root.exit).ifNode.node_number].add((DecisionNode) ((DecisionNode) root).elseNode);
-                    predecessor[((DecisionNode) root.exit).elseNode.node_number].add((DecisionNode) ((DecisionNode) root).elseNode);
-
-
-                    System.out.println("Updated  "+ predecessor[((DecisionNode) root.exit).ifNode.node_number]+"  "
-                            + predecessor[((DecisionNode) root.exit).elseNode.node_number]+
-                            " \n\n");
-
-                    root= root.exit;
-                }
-                else if (root.exit instanceof LoopNode)
-                {
-
-                    CFGNode temp=((LoopNode)root.exit).entry;
-                    predecessor[ ((LoopNode) root.exit).entry.node_number].add(((DecisionNode)root).ifNode);
-                    predecessor[ ((LoopNode) root.exit).entry.node_number].add(((DecisionNode)root).elseNode);
-                    //System.out.println(temp.refToFirst);
-                    System.out.println("ref to first "+temp.refToFirst);
-
-                    while(temp.refToFirst == null )
-                    {
-                        if (temp instanceof DecisionNode)
-                        {
-                            if(temp.exit instanceof DecisionNode)
-                            {
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).ifNode);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).ifNode);
-
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).elseNode);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).elseNode);
-                                temp=temp.exit;
-                            }
-                            else if(temp.exit instanceof CFGNode)
-                            {
-                                predecessor[temp.exit.node_number].add(((DecisionNode) temp).ifNode);
-                                predecessor[temp.exit.node_number].add(((DecisionNode) temp).elseNode);
-                                temp=temp.exit;
-                            }
-                        }
-                        else if(temp instanceof CFGNode)
-                        {
-                            if(temp.exit instanceof DecisionNode)
-                            {
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( temp);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(temp);
-                            }
-                            else if(temp.exit instanceof CFGNode)
-                            {
-                                predecessor[temp.exit.node_number].add(temp);
-                            }
-                            temp=temp.exit;
-                        }
-                        //System.out.println("Loop Next node "+temp);
-
-
-                    }//loop processed
-
-                    //process last node
-
-                    if (temp instanceof DecisionNode)
-                    {
-                        if(temp.exit instanceof DecisionNode)
-                        {
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).ifNode);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).ifNode);
-
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).elseNode);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).elseNode);
-
-                        }
-                        else if(temp.exit instanceof CFGNode)
-                        {
-                            predecessor[temp.exit.node_number].add(((DecisionNode) temp).ifNode);
-                            predecessor[temp.exit.node_number].add(((DecisionNode) temp).elseNode);
-                        }
-                    }
-                    else if(temp instanceof CFGNode)
-                    {
-                        if(temp.exit instanceof DecisionNode)
-                        {
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( temp);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(temp);
-                        }
-                        else if(temp.exit instanceof CFGNode)
-                        {
-                            predecessor[temp.exit.node_number].add(temp);
-                        }
-                    }
-
-                    //Add last node as pred to entry
-                    root = root.exit;
-                    predecessor[temp.refToFirst.node_number].add(temp);
-                    predecessor[root.exit.node_number].add(((LoopNode)root).entry);
-                    predecessor[root.exit.node_number].add(temp);
-                    root=root.exit;
-
-
-                }
-                else
-                {
-                    System.out.println("Next is cfg node ");
-                    predecessor[root.exit.node_number].add(((DecisionNode) root).ifNode);
-                    predecessor[root.exit.node_number].add(((DecisionNode) root).elseNode);
-                    System.out.println("Updated  "+ predecessor[root.exit.node_number] + " \n\n");
-
-                    root= root.exit;
-                }
-
-            }
-            else //it will be cfg node, as we have bypassed loop, by shifting pointer to entry
-            {
-                //predecessor[root.exit.node_number].add(root);
-                System.out.println("curr node is cfg  ");
-                //root= root.exit;
-                if(root.exit instanceof DecisionNode)
-                {
-                    System.out.println("Next is dec node ");
-                    predecessor[((DecisionNode) root.exit).ifNode.node_number].add(root);
-                    predecessor[((DecisionNode) root.exit).elseNode.node_number].add(root);
-
-                    System.out.println("Updated  "+ predecessor[((DecisionNode) root.exit).ifNode.node_number]+"  "
-                            + predecessor[((DecisionNode) root.exit).elseNode.node_number]+
-                            " \n\n");
-
-                    root= root.exit;
-                }
-                else if (root.exit instanceof LoopNode)
-                {
-                    CFGNode temp=((LoopNode)root.exit).entry;
-                    predecessor[ ((LoopNode) root.exit).entry.node_number].add(root);
-
-                    //System.out.println(temp.refToFirst);
-                    System.out.println("\n\n\n\n-----------------------LOOP NODE----------------------\n\n\n\n");
-
-                    while(temp.refToFirst == null )
-                    {
-                        System.out.println("Inside loop "+temp.statements);
-
-                        if (temp instanceof DecisionNode)
-                        {
-                            if(temp.exit instanceof DecisionNode)
-                            {
-
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).ifNode);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).ifNode);
-
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).elseNode);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).elseNode);
-
-                                System.out.println("Next node is dec node\n Updated , pre["+((DecisionNode) temp.exit).ifNode.node_number +"] = "+predecessor[((DecisionNode) temp.exit).ifNode.node_number]+"  pre[ "+((DecisionNode) temp.exit).elseNode.node_number+"]=  "+predecessor[((DecisionNode) temp.exit).elseNode.node_number]);
-
-                                temp=temp.exit;
-                            }
-                            else if(temp.exit instanceof CFGNode)
-                            {
-
-                                predecessor[temp.exit.node_number].add(((DecisionNode) temp).ifNode);
-                                predecessor[temp.exit.node_number].add(((DecisionNode) temp).elseNode);
-                                System.out.println("Next node is cfg node\n Updated , pre["+temp.exit.node_number+"] = "+predecessor[temp.exit.node_number]);
-                                temp=temp.exit;
-                            }
-                        }
-                        else if(temp instanceof CFGNode)
-                        {
-                            if(temp.exit instanceof DecisionNode)
-                            {
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( temp);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(temp);
-                                System.out.println("Next node is dec node\n Updated , pre["+((DecisionNode) temp.exit).ifNode.node_number +"] = "+predecessor[((DecisionNode) temp.exit).ifNode.node_number]+"  pre[ "+((DecisionNode) temp.exit).elseNode.node_number+"]=  "+predecessor[((DecisionNode) temp.exit).elseNode.node_number]);
-
-                            }
-                            else if(temp.exit instanceof CFGNode)
-                            {
-                                predecessor[temp.exit.node_number].add(temp);
-                                System.out.println("Next node is cfg node\n Updated , pre["+temp.exit.node_number+"] = "+predecessor[temp.exit.node_number]);
-
-                            }
-                            temp=temp.exit;
-                        }
-                        //System.out.println("Loop Next node "+temp);
-
-
-                    }//loop processed
-
-                    //process last node
-
-                    if (temp instanceof DecisionNode)
-                    {
-                        if(temp.exit instanceof DecisionNode)
-                        {
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).ifNode);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).ifNode);
-
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).elseNode);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).elseNode);
-
-                            System.out.println("Next node is dec node\n Updated , pre["+((DecisionNode) temp.exit).ifNode.node_number +"] = "+predecessor[((DecisionNode) temp.exit).ifNode.node_number]+"  pre[ "+((DecisionNode) temp.exit).elseNode.node_number+"]=  "+predecessor[((DecisionNode) temp.exit).elseNode.node_number]);
-
-
-                        }
-                        else if(temp.exit instanceof CFGNode)
-                        {
-                            predecessor[temp.exit.node_number].add(((DecisionNode) temp).ifNode);
-                            predecessor[temp.exit.node_number].add(((DecisionNode) temp).elseNode);
-                            System.out.println("Next node is cfg node\n Updated , pre["+temp.exit.node_number+"] = "+predecessor[temp.exit.node_number]);
-
-                        }
-                    }
-                    else if(temp instanceof CFGNode)
-                    {
-                        if(temp.exit instanceof DecisionNode)
-                        {
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( temp);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(temp);
-                            System.out.println("Next node is dec node\n Updated , pre["+((DecisionNode) temp.exit).ifNode.node_number +"] = "+predecessor[((DecisionNode) temp.exit).ifNode.node_number]+"  pre[ "+((DecisionNode) temp.exit).elseNode.node_number+"]=  "+predecessor[((DecisionNode) temp.exit).elseNode.node_number]);
-
-                        }
-                        else if(temp.exit instanceof CFGNode)
-                        {
-                            predecessor[temp.exit.node_number].add(temp);
-                            System.out.println("Next node is cfg node\n Updated , pre["+temp.exit.node_number+"] = "+predecessor[temp.exit.node_number]);
-
-                        }
-                    }
-
-                    root = root.exit;
-                    predecessor[temp.refToFirst.node_number].add(temp);
-                    predecessor[root.exit.node_number].add(((LoopNode)root).entry);
-                    predecessor[root.exit.node_number].add(temp);
-                    root=root.exit;
-
-                }
-                else
-                {
-                    System.out.println("Next is cfg node ");
-                    predecessor[root.exit.node_number].add(root);
-                    System.out.println("Next node is cfg node\n Updated , pre["+root.exit.node_number+"] = "+predecessor[root.exit.node_number]);
-
-
-                    root= root.exit;
-                }
-
-
-
-            }
-
-
-        }
-
-    }
-
-    public void display()
-    {
-        for (int i=1;i<predecessor.length;i++)
-        {
-            System.out.print(i+"  { ");
-            for(CFGNode cfgNode : predecessor[i])
-                System.out.print(cfgNode.node_number+"   ");
-
-            System.out.println(" }");
-        }
-
     }
 
     public void displayMap(HashMap<String,ArrayList<Integer>> map)
@@ -312,28 +139,7 @@ public class DFA {
 
     }
 
-    public static <T> ArrayList<T> removeDuplicates(ArrayList<T> list)
-    {
-
-        // Create a new ArrayList
-        ArrayList<T> newList = new ArrayList<T>();
-
-        // Traverse through the first list
-        for (T element : list) {
-
-            // If this element is not present in newList
-            // then add it
-            if (!newList.contains(element)) {
-
-                newList.add(element);
-            }
-        }
-
-        // return the new list
-        return newList;
-    }
-
-    public HashMap<String, ArrayList<Integer>> union(ArrayList<CFGNode> list)
+    public HashMap<String, ArrayList<Integer>> union(ArrayList<CFGNode> list , HashMap<String,ArrayList<Integer>>[] map)
     {
         if(list.size() == 0)
             return new HashMap<>();
@@ -342,7 +148,7 @@ public class DFA {
 
         for(CFGNode l : list)
         {
-            for(Map.Entry<String , ArrayList<Integer>> entry: out[l.node_number].entrySet())
+            for(Map.Entry<String , ArrayList<Integer>> entry: map[l.node_number].entrySet())
             {
                 String key = entry.getKey();
                 ArrayList<Integer> values= new ArrayList<>(entry.getValue());
@@ -373,17 +179,14 @@ public class DFA {
     }
 
     public HashMap<String, ArrayList<Integer>> computeOut(HashMap<String,ArrayList<Integer>> in, CFGNode node) {
-        String expression = node.statements;//gen [n]
+        Statements expression = node.statements;//gen [n]
         HashMap<String,ArrayList<Integer>> in_copy=new HashMap<>();
         in_copy.putAll(in);
-        int pos= expression.indexOf("=");
-        if( pos == -1) //not an assignment statement
+
+        if( expression instanceof Assign) //not an assignment statement
         {
-            return in_copy;
-        }
-        else {
-            String id= expression.substring(0,pos);
-            //if present, then  kill all def inside in.
+            String id= ((Assign) expression).left.toString();
+
             int found=0;
             for(Map.Entry entry: in_copy.entrySet())
             {
@@ -405,27 +208,13 @@ public class DFA {
             }
             return in_copy;
         }
+        else {
 
-    }
-
-    public boolean checkIfEquals(HashMap<String, ArrayList<Integer>>[] m1 , HashMap<String, ArrayList<Integer>>[] m2)
-    {
-        int eq=1;
-        for(int i=0; i<m1.length; i++)
-        {
-            HashMap<String, ArrayList<Integer>> first = m1[i];
-            HashMap<String, ArrayList<Integer>> second = m2[i];
-
-            if(!first.equals(second))
-            {
-                eq=0;
-                break;
-            }
+            return in_copy;
         }
-        if(eq == 1)
-            return true;
-        return false;
+
     }
+
     public void reaching_definitions()
     {
         HashMap<String,ArrayList<Integer>>[] in_prev , out_prev;
@@ -439,34 +228,190 @@ public class DFA {
         }
 
         int cnt=1;
-        System.out.println(checkIfEquals(in_prev, in));
-        System.out.println(checkIfEquals(out_prev,out));
+
 
         do
         {
-            System.out.println("---------------------------------------------------ITERATION - "+cnt++ +"----------------------------------------------------");
             for (int i=2;i<predecessor.length;i++)
             {
 
                 in_prev[i].putAll(in[i]);
                 out_prev[i].putAll(out[i]);
 
-                in[i] = union(predecessor[i]);
+                in[i] = union(predecessor[i] , out);
                 out[i] = computeOut(in[i] , CFG_Create.map.get(i));
 
-
-                System.out.println("in[ "+i+"] = ");
-                displayMap(in[i]);
-                System.out.println("out[ "+i+"] = ");
-                displayMap(out[i]);
-                //System.out.println(in_prev.equals(in) +"   "+out_prev.equals(out));
-                System.out.println("\n\n");
             }
 
-            System.out.println(checkIfEquals(in_prev, in));
-            System.out.println(checkIfEquals(out_prev,out));
+        }
+        while(!(checkIfEquals(in_prev, in)) || !(checkIfEquals(out_prev,out)) );
+
+        for (int i=1;i<predecessor.length;i++)
+        {
+            System.out.println("in[ "+i+"] = ");
+            displayMap(in[i]);
+            System.out.println("\nout[ "+i+"] = ");
+            displayMap(out[i]);
+            System.out.println("\n\n");
+        }
+    }
+
+}
+
+class LivenessAnalysis extends DFA{
+    ArrayList<String>[] in_la, out_la;
+    LivenessAnalysis(int nodes, ArrayList<CFGNode>[] predecessor, ArrayList<CFGNode>[] successor){
+        super(predecessor, successor);
+        in_la = new ArrayList[nodes+1];
+        out_la = new ArrayList[nodes+1];
+
+        for (int i=0;i<=nodes;i++)
+        {
+            in_la[i] = new ArrayList<>();
+            out_la[i] = new ArrayList<>();
+        }
+
+    }
+
+    public ArrayList<String> union_LA(ArrayList<CFGNode> succ_list , ArrayList<String>[] in )
+    {
+        if(succ_list.size() == 0)
+            return new ArrayList<>();
+
+        ArrayList<String> unionOut = new ArrayList<>();
+
+        for(CFGNode l : succ_list)
+        {
+            for (String s: in[l.node_number])
+                unionOut.add(s);
+        }
+        removeDuplicates(unionOut);
+        return unionOut;
+    }
+
+    public ArrayList<String> computeIn(ArrayList<String> out, CFGNode node)
+    {
+        Statements expression = node.statements;//gen [n]
+        ArrayList<String> out_copy=new ArrayList<>(out);
+
+        ArrayList<String> use= new ArrayList<>();
+
+        if( expression instanceof Assign) //not an assignment statement
+        {
+            Expr expr = ((Assign) expression).right;//use
+            //Computing USE
+            if(expr instanceof AddExpr)
+            {
+                expr_use(((AddExpr) expr).left, ((AddExpr) expr).right, use);
+                use=removeDuplicates(use);
+            }
+            else if (expr instanceof MulExpr)
+            {
+                expr_use(((MulExpr) expr).left, ((MulExpr) expr).right, use);
+                use=removeDuplicates(use);
+            }
+            else if(expr instanceof IdExpr)
+            {
+                use.add(expr.toString());
+            }
+
+            //Computing out\def
+            //System.out.println("Computing out def \n\n");
+            String id= ((Assign) expression).left.toString();//def
+            //System.out.println("def= "+id+"  out_copy= "+out_copy);
+            for(int i=0;i<out_copy.size();i++)
+            {
+                if(out_copy.get(i).equals(id))
+                {
+                    out_copy.remove(out_copy.get(i));
+                    break;
+                }
+            }
+            //System.out.println("\nAfter removing, "+out_copy);
+
+            //System.out.println("\n\n union use= "+use);
+            //union use and out_copy
+            for(String s: use)
+            {
+                out_copy.add(s);
+            }
+            out_copy=removeDuplicates(out_copy);
+            //System.out.println("\nFinal res, "+out_copy);
+            return out_copy;
 
         }
-        while(!checkIfEquals(in_prev, in) && !checkIfEquals(out_prev,out));
+        else if (expression instanceof Return)
+        {
+            Expr expr= ((Return) expression).e;
+            if(expr instanceof AddExpr)
+            {
+                expr_use(((AddExpr) expr).left, ((AddExpr) expr).right, use);
+                use= removeDuplicates(use);
+            }
+            else if (expr instanceof MulExpr)
+            {
+                expr_use(((MulExpr) expr).left, ((MulExpr) expr).right, use);
+                use=removeDuplicates(use);
+            }
+            else if(expr instanceof IdExpr)
+            {
+                use.add(expr.toString());
+            }
+
+            //union use and out_copy
+            for(String s: use)
+            {
+                out_copy.add(s);
+            }
+            out_copy=removeDuplicates(out_copy);
+            return out_copy;
+        }
+        else {
+            //declaration node or boolean constant
+            //no use, no def
+
+            return out_copy;
+        }
+    }
+
+    public void liveness_analysis()
+    {
+        ArrayList<String>[] in_prev , out_prev;
+        in_prev= new ArrayList[in_la.length];
+        out_prev= new ArrayList[out_la.length];
+
+        for(int i=0;i<in_la.length;i++)
+        {
+            in_prev[i] =new ArrayList<>();
+            out_prev[i] = new ArrayList<>();
+        }
+
+        do
+        {
+            for (int i=successor.length-1;i>=1;i--)
+            {
+
+                in_prev[i] = new ArrayList<>(in_la[i]);
+                out_prev[i] = new ArrayList<>(out_la[i]);
+
+                in_la[i] = computeIn(out_la[i], CFG_Create.map.get(i));
+                out_la[i] = union_LA(successor[i], in_la);
+
+                in_la[i] = removeDuplicates(in_la[i]);
+                out_la[i] = removeDuplicates(out_la[i]);
+
+            }
+        }
+        while( !arrayEquals(in_la,in_prev) || !arrayEquals(out_la,out_prev) );
+
+
+        for(int i=1;i<successor.length;i++)
+        {
+            System.out.println("in[ " + i + "] = " + in_la[i]);
+            System.out.println("out[ " + i + "] = " + out_la[i]);
+            System.out.println("\n\n");
+        }
+
     }
 }
+

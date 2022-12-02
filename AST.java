@@ -38,14 +38,9 @@ class BoolType extends Type {
 	}
 }
 
-class VoidType extends Type {
-  	public VoidType() 
-  	{
-		super("Void");
-	}
-}
+interface Statements{}
 
-class Declaration {
+class Declaration implements Statements{
   
   	public final String varname;
 	public final Type type;
@@ -136,7 +131,7 @@ class FunctionBody{
 
 
 
-class Sequence{
+class Sequence {
 	public List<Instruction> instr;
 	
 	public Sequence(List<Instruction> instr){
@@ -163,7 +158,7 @@ class Sequence{
 
 
 
-interface Instruction{};
+interface Instruction extends Statements{};
 
 
 class Assign implements Instruction, LoopSubBlock {
@@ -193,8 +188,9 @@ class Return implements Instruction {
 
 
 class IfCondition implements Instruction, LoopSubBlock {
-  	public final Subexpr e1, e2, pred;
-	public IfCondition(Subexpr e,Subexpr e1, Subexpr e2) 
+  	public final Subexpr e1, e2;
+	  public final Expr pred;
+	public IfCondition(Expr e,Subexpr e1, Subexpr e2)
 	{
 	  	this.pred=e;
 	  	this.e1=e1;
@@ -202,11 +198,11 @@ class IfCondition implements Instruction, LoopSubBlock {
   	}
   	
   	
-	public String toString() { return "IF ( "+this.pred +" ) then " +this.e1 +" else "+this.e2 ; }
+	public String toString() { return "IF ( "+this.pred.toString() +" ) then " +this.e1 +" else "+this.e2 ; }
 }
 
 
-class Subexpr{
+class Subexpr implements Statements{
 	
 	public final Assign a;
 	public final Expr e;
@@ -245,7 +241,7 @@ class Loop implements Instruction {
 }
 
 
-class LoopBlock{
+class LoopBlock implements Statements{
 	
 	public List<LoopSubBlock> subStatements;
 	
@@ -274,14 +270,14 @@ interface Expr extends Instruction{
   public abstract int evaluate();
 }
 
-class AddExpr implements Expr 
+class AddExpr implements Expr , Statements
 {
   	public final Expr left;
 	public final Expr right;
 
   	public AddExpr(Expr left, Expr right) 
   	{
-    		this.left = left;
+		  this.left = left;
 		this.right = right;
 	}
 
@@ -289,7 +285,7 @@ class AddExpr implements Expr
 	public String toString() { return this.left.toString() + " + " + this.right.toString(); }
 }
 
-class MulExpr implements Expr {
+class MulExpr implements Expr, Statements {
   	public final Expr left;
 	public final Expr right;
 
@@ -302,7 +298,7 @@ class MulExpr implements Expr {
 	public String toString() { return this.left.toString() + " * " + this.right.toString(); }
 }
 
-class NegExpr implements Expr {
+class NegExpr implements Expr,Statements {
   	Expr expr;
 	
 	public NegExpr(Expr expr) 
@@ -314,7 +310,7 @@ class NegExpr implements Expr {
 	public String toString() { return "-(" + this.expr.toString() + ")"; }
 }
 
-class NumExpr implements Expr {
+class NumExpr implements Expr,Statements {
   	public final Integer value;
 	
 	public NumExpr(Integer value) 
@@ -327,7 +323,7 @@ class NumExpr implements Expr {
   
 }
 
-class BoolExpr implements Expr {
+class BoolExpr implements Expr ,Statements{
   	public final Boolean value;
 	
 	public BoolExpr(Boolean value) 
@@ -336,11 +332,11 @@ class BoolExpr implements Expr {
   	}
 
 	public int evaluate() { return 0; }
-	public String toString() { return this.value.toString(); }
+	public String toString() { return value.equals(true)?"TRUE":"FALSE"; }
   
 }
 
-class IdExpr implements Expr {
+class IdExpr implements Expr,Statements {
   	public final String name;
 	public IdExpr(String name) 
 	{

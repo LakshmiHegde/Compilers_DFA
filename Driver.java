@@ -1,6 +1,4 @@
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 
@@ -17,21 +15,30 @@ public class Driver {
 			parser p = new parser(new IdLexer(new FileReader(input)));
       		//System.out.println(p);
 			FunctionDeclaration program = (FunctionDeclaration)(p.parse().value);
+			System.out.println("Function: ");
 			System.out.println(program.toString());
+
 			CFG_Create cfg_create = new CFG_Create();
 			cfg_create.create(program);
-			System.out.println("After create "+ cfg_create.root);
-			//cfg_create.display();
+			System.out.println("\nControl flow graph: ");
+			cfg_create.display();
 			//cfg_create.displayMap();
-			cfg_create.displayPrev();
+			//cfg_create.displayPrev();
 
-			/*DFA dfa = new DFA(cfg_create.countNodes);
-			System.out.println("After dis "+cfg_create.root+"  \n\n ");
-			dfa.get_pred_succ(cfg_create.root);
-			System.out.println("\n\n Done predecessor\n\n");
-			dfa.display();
+			Pred_Succ_List pred_succ_list = new Pred_Succ_List(cfg_create.countNodes , cfg_create.root);
+			pred_succ_list.get_pred();
+			pred_succ_list.get_succ();
+			pred_succ_list.display();
 
-			dfa.reaching_definitions();*/
+			//DFA dfa = new DFA(cfg_create.countNodes,pred_succ_list.predecessor,pred_succ_list.successor );
+			ReachingDefinitions reachingDefinitions = new ReachingDefinitions(cfg_create.countNodes, pred_succ_list.predecessor , pred_succ_list.successor);
+			System.out.println("Reaching Definitions");
+			reachingDefinitions.reaching_definitions();
+
+			LivenessAnalysis livenessAnalysis = new LivenessAnalysis(cfg_create.countNodes, pred_succ_list.predecessor , pred_succ_list.successor);
+			System.out.println("Liveness analysis");
+			livenessAnalysis.liveness_analysis();
+
 		}
 	
 		catch(FileNotFoundException e) {

@@ -63,7 +63,7 @@ vardeclseq  ::= vardecl:v {: if(RESULT == null)RESULT=new ArrayList<>(); RESULT.
 
 
 
-ifcond	   ::= IF subexpr:e THEN subexpr:e1 ELSE subexpr:e2 {: RESULT = new IfCondition(e,e1,e2); :} ;
+ifcond	   ::= IF expr:e THEN subexpr:e1 ELSE subexpr:e2 {: RESULT = new IfCondition(e,e1,e2); :} ;
 
 subexpr    ::=	expr:e {: RESULT = new Subexpr(e); :}
 		|
