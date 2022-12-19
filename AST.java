@@ -155,15 +155,13 @@ class Sequence {
 
 
 
-
-
-
 interface Instruction extends Statements{};
 
 
-class Assign implements Instruction, LoopSubBlock {
+class Assign implements Instruction, LoopSubBlock  {
   	public final Expr right;
   	public final IdExpr left;
+
 	public Assign(IdExpr left, Expr right) 
 	{
 	  this.left=left;
@@ -204,9 +202,9 @@ class IfCondition implements Instruction, LoopSubBlock {
 
 class Subexpr implements Statements{
 	
-	public final Assign a;
-	public final Expr e;
-	
+	public  Assign a;
+	public  Expr e;
+
 	
 	public Subexpr(Assign a)
 	{
@@ -296,18 +294,6 @@ class MulExpr implements Expr, Statements {
 
 	public int evaluate() { return this.left.evaluate() *+ this.right.evaluate(); }
 	public String toString() { return this.left.toString() + " * " + this.right.toString(); }
-}
-
-class NegExpr implements Expr,Statements {
-  	Expr expr;
-	
-	public NegExpr(Expr expr) 
-	{
-	  this.expr = expr;
-  	}
-
-	public int evaluate() { return this.expr.evaluate(); }
-	public String toString() { return "-(" + this.expr.toString() + ")"; }
 }
 
 class NumExpr implements Expr,Statements {

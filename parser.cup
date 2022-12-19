@@ -126,13 +126,10 @@ factor    ::= NUMBER:n
 	      {: RESULT = new NumExpr(n);  :} 
 	      |
 	      ID:id
-	      {:  RESULT = new IdExpr(id);  :} 
-	      | 
-              MINUS factor:e             
-	      {: RESULT = new NegExpr(e);  :} 
-	      | 
-              LPAREN expr:e RPAREN     
-	      {: RESULT = e;  :} 
+	      {:  RESULT = new IdExpr(id);  :}
+	      |
+              LPAREN expr:e RPAREN
+	      {: RESULT = e;  :}
 	      |
 	      BOOLCONST:b {: RESULT = new BoolExpr(b); :}
 	      ;

@@ -1,0 +1,17 @@
+num fun(num z)
+{
+	loop(true)
+	{
+		x=1
+		if(x) then x else y
+		y=1
+	}
+	loop(true)
+	{
+		x=1
+		if(x) then x else y
+		if(x) then x+1 else y+1
+		y=1
+	}
+	return x+y
+}

@@ -1,6 +1,5 @@
-import java.util.ArrayList;
+
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 class CFGNode{
@@ -26,17 +25,28 @@ class CFGNode{
 class DecisionNode extends CFGNode{
     CFGNode ifNode;
     CFGNode elseNode;
-    Statements predicate;
+    CFGNode predicate;
+
     DecisionNode(){
     }
     DecisionNode(IfCondition ifCond)
     {
-        predicate = (Expr)ifCond.pred;
+        predicate = new CFGNode(ifCond.pred , ++CFG_Create.countNodes);
         ifNode= new CFGNode((Subexpr)ifCond.e1, ++CFG_Create.countNodes);
         elseNode= new CFGNode((Subexpr)ifCond.e2,++CFG_Create.countNodes);
         exit=new CFGNode();
         refToFirst = null;
 
+    }
+
+    public void display()
+    {
+        System.out.println("\n\nPredicate Node: "+ predicate.node_number+" : "+ predicate.statements);
+        System.out.println("\n\nDecision node \nIf Node "
+                + ifNode.node_number+ " : "
+                +  ifNode.statements + "  \nElse Node "
+                + elseNode.node_number+ " :  "
+                +  elseNode.statements);
     }
 
 }
@@ -72,6 +82,7 @@ class LoopNode extends CFGNode{
             else if(lsb instanceof IfCondition){
                 DecisionNode dn = new DecisionNode((IfCondition) lsb);
                 temp.exit=dn;
+                CFG_Create.map.put(dn.predicate.node_number , dn.predicate);
                 CFG_Create.map.put(dn.ifNode.node_number, dn.ifNode);
                 CFG_Create.map.put(dn.elseNode.node_number, dn.elseNode);
                 //System.out.println("loop if current "+temp);
@@ -101,17 +112,9 @@ class LoopNode extends CFGNode{
             if (temp instanceof DecisionNode)
             {
                 //System.out.println("\nLoop if current "+temp);
-                System.out.println("\n\nDecision node\nIf Node "
-                        +((DecisionNode)temp).ifNode.node_number+" : "
-                        +  ((DecisionNode)temp).ifNode.statements.toString() + "\nElse Node "
-                        +((DecisionNode)temp).elseNode.node_number+ " : "
-                        +  ((DecisionNode)temp).elseNode.statements.toString());
-
-                //System.out.println(((DecisionNode)temp).exit.getClass().getName());
+                ((DecisionNode) temp).display();
 
                 temp = ((DecisionNode)temp).exit;
-                //System.out.println(temp.getClass().getName());
-                //System.out.println("\nNext node "+temp);
 
             }
             else if(temp instanceof CFGNode)
@@ -122,7 +125,6 @@ class LoopNode extends CFGNode{
                 //System.out.println("\nNext node "+temp);
             }
             //System.out.println("Loop Next node "+temp);
-
 
         }
         //last node
@@ -234,8 +236,10 @@ public class CFG_Create {
             {
                 DecisionNode ifN= new DecisionNode((IfCondition) i);
                 root.exit =ifN;
+                map.put(ifN.predicate.node_number, ifN.predicate);
                 map.put(ifN.ifNode.node_number, ifN.ifNode);
                 map.put(ifN.elseNode.node_number , ifN.elseNode);
+
                 root.exit.prev = root;
                 //System.out.println("\n\nif "+root);
                 root = root.exit;
@@ -276,15 +280,8 @@ public class CFG_Create {
             if (root instanceof DecisionNode)
             {
                 //System.out.println("if current "+root);
-                System.out.println("\n\nDecision node \nIf Node "
-                        +((DecisionNode)root).ifNode.node_number+ " : "
-                        +  ((DecisionNode)root).ifNode.statements + "  \nElse Node "
-                        +((DecisionNode)root).elseNode.node_number+ " :  "
-                        +  ((DecisionNode)root).elseNode.statements);
-
-                //System.out.println(((DecisionNode)root).exit.getClass().getName());
+                ((DecisionNode) root).display();
                 root = ((DecisionNode)root).exit;
-
             }
 
             else if ( root instanceof LoopNode)

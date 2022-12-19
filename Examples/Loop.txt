@@ -1,0 +1,11 @@
+num fun(num x)
+{
+	a=0
+	loop(true)
+	{
+		b=a+1
+		c=c+b
+		a=b*2
+	}
+	return c
+}	

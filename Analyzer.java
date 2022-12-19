@@ -1,13 +1,17 @@
 import java.util.*;
 
-public class DFA {
-    ArrayList<CFGNode>[] predecessor, successor;
-    DFA(ArrayList<CFGNode>[] predecessor, ArrayList<CFGNode>[] successor )
+abstract class Meet{
+    public abstract Set execute(Set a,Set b);
+}
+class Union extends Meet{
+    public Set execute(Set s1, Set s2)
     {
-        this.predecessor = predecessor;
-        this.successor = successor;
+        s1.addAll(s2);
+        return s1;
     }
+}
 
+class BasicUtilities{
     public boolean checkIfEquals(HashMap<String, HashSet<Integer>>[] m1 , HashMap<String, HashSet<Integer>>[] m2)
     {
         int eq=1;
@@ -99,40 +103,106 @@ public class DFA {
             use.add(expr.toString());
         }
     }
+}
+
+abstract class Analyzer {
+    public Meet meet;
+    HashMap<String, HashSet<Integer >>[] in,out;
+    ArrayList<CFGNode>[] list;
+
+    Analyzer(Meet meet, int nodes, ArrayList<CFGNode>[] list)
+    {
+        this.meet = meet;
+        this.list = list;
+
+        in = new HashMap[nodes+1];
+        out = new HashMap[nodes+1];
+        for (int i=0;i<= nodes;i++)
+        {
+            in[i]= new HashMap();
+            out[i] = new HashMap();
+        }
+    }
+    abstract public HashMap<String, HashSet<Integer>> union(ArrayList<CFGNode> list , HashMap<String, HashSet<Integer>>[] map );
+    abstract public HashMap<String, HashSet<Integer>> compute(HashMap<String,HashSet<Integer>> in, CFGNode node);
+
+    public void forwardAlgorithm(){
+        HashMap<String,HashSet<Integer>>[] in_prev , out_prev;
+        in_prev= new HashMap[in.length];
+        out_prev= new HashMap[out.length];
+
+        for(int i=0;i<in.length;i++)
+        {
+            in_prev[i] =new HashMap<>();
+            out_prev[i] = new HashMap<>();
+        }
+
+        int cnt=1;
+        do
+        {
+            for (int i=2;i<list.length;i++)
+            {
+
+                in_prev[i].putAll(in[i]);
+                out_prev[i].putAll(out[i]);
+
+                in[i] = union(list[i] , out);
+                out[i] = compute(in[i] , CFG_Create.map.get(i));
+
+            }
+
+        }
+        while( ! new BasicUtilities().checkIfEquals(out_prev,out) );
+
+        for (int i=1;i<list.length;i++)
+        {
+            System.out.println("in[ "+i+"] = "+in[i]);
+            //displayMap(in[i]);
+            System.out.println("\nout[ "+i+"] = "+out[i]);
+            //displayMap(out[i]);
+            System.out.println("\n\n");
+        }
+    }
+
+    public void backwardAlgorithm(){
+        HashMap<String,HashSet<Integer>>[] in_prev , out_prev;
+        in_prev= new HashMap[in.length];
+        out_prev= new HashMap[out.length];
+
+        for(int i=0;i<in.length;i++)
+        {
+            in_prev[i] =new HashMap<>();
+            out_prev[i] = new HashMap<>();
+        }
+
+        do {
+            for (int i = list.length - 1; i >= 1; i--) {
+                in_prev[i].putAll(in[i]);
+                out_prev[i].putAll(out[i]);
+                in[i] = compute(out[i], CFG_Create.map.get(i));
+                out[i] = union(list[i], in);
+            }
+
+        }
+        while( ! new BasicUtilities().arrayEquals(in,in_prev) );
+
+        for(int i=1;i<list.length;i++)
+        {
+            System.out.println("in[ " + i + "] = " + in[i].keySet());
+            System.out.println("out[ " + i + "] = " + out[i].keySet());
+            System.out.println("\n\n");
+        }
+    }
 
 }
 
-
-class ReachingDefinitions extends DFA{
-    HashMap<String,HashSet<Integer>>[] in , out;
-    ReachingDefinitions(int nodes, ArrayList<CFGNode>[] predecessor, ArrayList<CFGNode>[] successor){
-        super(predecessor, successor );
-        in = new HashMap[nodes+1];
-        out= new HashMap[nodes+1];
-
-        for (int i=0;i<=nodes;i++)
-        {
-            in[i] = new HashMap<>();
-            out[i] = new HashMap<>();
-        }
+class RDAnalysis extends Analyzer{
+    RDAnalysis(ArrayList<CFGNode>[] successor, int nodes) {
+        super(new Union(), nodes, successor);
     }
-
-    public void displayMap(HashMap<String,HashSet<Integer>> map)
+    @Override
+    public HashMap<String, HashSet<Integer>> union(ArrayList<CFGNode> list, HashMap<String, HashSet<Integer>>[] map)
     {
-        for (Map.Entry entry: map.entrySet())
-        {
-            System.out.print(entry.getKey()+" : ");
-            System.out.print(entry.getValue()+"   ");
-        }
-
-        System.out.println();
-    }
-
-    public HashMap<String, HashSet<Integer>> union(ArrayList<CFGNode> list , HashMap<String,HashSet<Integer>>[] map)
-    {
-        if(list.size() == 0)
-            return new HashMap<>();
-
         HashMap<String,HashSet<Integer>> unionOut = new HashMap<>();
 
         for(CFGNode l : list)//for each predecessor
@@ -141,21 +211,22 @@ class ReachingDefinitions extends DFA{
             {
                 String key = entry.getKey();
                 HashSet<Integer> values= new HashSet<>(entry.getValue());
-
                 if(unionOut.containsKey(key))
                 {
-                    unionOut.get(key).addAll(values);
+                    HashSet un_set = (HashSet) meet.execute(unionOut.get(key), values);
+                    unionOut.put(key,un_set );
                 }
                 else{
-                    unionOut.put(key, values);
-                }
+                        unionOut.put(key, values);
+                    }
             }
 
         }
+
         return unionOut;
     }
-
-    public HashMap<String, HashSet<Integer>> computeOut(HashMap<String,HashSet<Integer>> in, CFGNode node)
+    @Override
+    public HashMap<String, HashSet<Integer>> compute(HashMap<String,HashSet<Integer>> in, CFGNode node)
     {
         Statements expression = node.statements;//gen [n]
         HashMap<String,HashSet<Integer>> in_copy=new HashMap<>();
@@ -217,196 +288,104 @@ class ReachingDefinitions extends DFA{
         return in_copy;
     }
 
-    public void reaching_definitions()
-    {
-        HashMap<String,HashSet<Integer>>[] in_prev , out_prev;
-        in_prev= new HashMap[in.length];
-        out_prev= new HashMap[out.length];
-
-        for(int i=0;i<in.length;i++)
-        {
-            in_prev[i] =new HashMap<>();
-            out_prev[i] = new HashMap<>();
-        }
-
-        int cnt=1;
-
-
-        do
-        {
-            for (int i=2;i<predecessor.length;i++)
-            {
-
-                in_prev[i].putAll(in[i]);
-                out_prev[i].putAll(out[i]);
-
-                in[i] = union(predecessor[i] , out);
-                out[i] = computeOut(in[i] , CFG_Create.map.get(i));
-
-            }
-
-        }
-        while(!(checkIfEquals(in_prev, in)) || !(checkIfEquals(out_prev,out)) );
-
-        for (int i=1;i<predecessor.length;i++)
-        {
-            System.out.print("in[ "+i+"] = ");
-            displayMap(in[i]);
-            System.out.print("\nout[ "+i+"] = ");
-            displayMap(out[i]);
-            System.out.println("\n\n");
-        }
-    }
 
 }
 
-class LivenessAnalysis extends DFA{
-
-    HashSet<String>[] in_la, out_la;
-    LivenessAnalysis(int nodes, ArrayList<CFGNode>[] predecessor, ArrayList<CFGNode>[] successor){
-        super(predecessor, successor);
-        in_la = new HashSet[nodes+1];
-        out_la = new HashSet[nodes+1];
-
-        for (int i=0;i<=nodes;i++)
-        {
-            in_la[i] = new HashSet<>();
-            out_la[i] = new HashSet<>();
-        }
-
+class LVAnalysis extends Analyzer{
+    LVAnalysis(ArrayList<CFGNode>[] successor, int nodes) {
+        super(new Union(), nodes, successor);
     }
-
-    public HashSet<String> union_LA(ArrayList<CFGNode> succ_list , HashSet<String>[] in )
+    @Override
+    public HashMap<String, HashSet<Integer>> union(ArrayList<CFGNode> list , HashMap<String, HashSet<Integer>>[] map )
     {
-        if(succ_list.size() == 0)
-            return new HashSet<>();
 
-        HashSet<String> unionOut = new HashSet<>();
+        HashMap<String, HashSet<Integer>> unionOut = new HashMap<>();
+        HashSet<String> un_set = new HashSet<>();
 
-        for(CFGNode l : succ_list)//for each successor
+        for(CFGNode l : list)//for each succ
         {
-            for (String s: in[l.node_number]) //get its in
-                unionOut.add(s);
+            un_set = (HashSet<String>) meet.execute( un_set, map[l.node_number].keySet());
         }
 
+        for(String s: un_set)
+        {
+            unionOut.put(s , new HashSet<>());
+        }
         return unionOut;
     }
 
-    public HashSet<String> computeIn(HashSet<String> out, CFGNode node)
+    @Override
+    public HashMap<String, HashSet<Integer>> compute(HashMap<String, HashSet<Integer>> out, CFGNode node)
     {
-        Statements expression = node.statements;//gen [n]
-        HashSet<String> out_copy=new HashSet<>(out);
 
-        //System.out.println("in comp "+node.node_number+"  "+expression+"  "+expression.getClass());
+        Statements expression = node.statements;//gen [n]
         HashSet<String> use= new HashSet<>();
+
+        HashMap<String, HashSet<Integer>> result = new HashMap<>();
 
         if( expression instanceof Assign) //not an assignment statement
         {
             Expr expr = ((Assign) expression).right;//use
             //Computing USE
-            evaluateExpression(expr, use);
-
-            //Computing out\def
-            //System.out.println("Computing out def \n\n");
-
+            new BasicUtilities().evaluateExpression(expr, use);
             String id= ((Assign) expression).left.toString();//def
-            //System.out.println("def= "+id+"  out_copy= "+out_copy);
 
-            if(out_copy.contains(id))
+            if(out.containsKey(id))//out\def
+                out.remove(id);
+
+            //use union out\def
+            for(String  s: use)
             {
-                out_copy.remove(id);
+                out.put(s, new HashSet<>());
             }
-
-            //System.out.println("\nAfter removing, "+out_copy);
-
-            //System.out.println("\n\n union use= "+use);
-            //union use and out_copy
-            out_copy.addAll(use);
-
-            //System.out.println("\nFinal res, "+out_copy);
-            return out_copy;
-
+            return out;
         }
         else if (expression instanceof Return)
         {
             Expr expr= ((Return) expression).e;
-            evaluateExpression(expr, use);
-            out_copy.addAll(use);
-
-            return out_copy;
+            new BasicUtilities().evaluateExpression(expr, use);
+            for(String  s: use)
+            {
+                out.put(s, new HashSet<>());
+            }
+            return out;
         }
         else if(expression instanceof Subexpr)
         {
             if(((Subexpr) expression).a == null)
             {
                 Expr expr = ((Subexpr) expression).e;
-                evaluateExpression(expr, use);
-                out_copy.addAll(use);
-
-                return out_copy;
-
+                new BasicUtilities().evaluateExpression(expr, use);
+                for(String  s: use)
+                {
+                    out.put(s, new HashSet<>());
+                }
+                return out;
             }
             else
             {
                 Expr expr = ((Subexpr) expression).a.right;
-                //Computing USE
-                evaluateExpression(expr,use);
+                new BasicUtilities().evaluateExpression(expr, use);
 
-                //Computing out\def
-                //System.out.println("Computing out def \n\n");
                 String id= ((Subexpr) expression).a.left.toString();//def
-                //System.out.println("def= "+id+"  out_copy= "+out_copy);
-                if(out_copy.contains(id))
+
+                if(out.containsKey(id))//out\def
+                    out.remove(id);
+
+                //use union out\def
+                for(String  s: use)
                 {
-                    out_copy.remove(id);
+                    out.put(s, new HashSet<>());
                 }
-                //union use and out_copy
-                out_copy.addAll(use);
-                //System.out.println("\nFinal res, "+out_copy);
-                return out_copy;
+                return out;
             }
         }
         else {
             //declaration node or boolean constant
             //no use, no def
-            return out_copy;
+
+            return out;
         }
     }
 
-    public void liveness_analysis()
-    {
-        HashSet<String>[] in_prev , out_prev;
-        in_prev= new HashSet[in_la.length];
-        out_prev= new HashSet[out_la.length];
-
-        for(int i=0;i<in_la.length;i++)
-        {
-            in_prev[i] =new HashSet<>();
-            out_prev[i] = new HashSet<>();
-        }
-
-        do
-        {
-            for (int i=successor.length-1;i>=1;i--)
-            {
-                in_prev[i] = new HashSet<>(in_la[i]);
-                out_prev[i] = new HashSet<>(out_la[i]);
-
-                in_la[i] = computeIn(out_la[i], CFG_Create.map.get(i));
-                out_la[i] = union_LA(successor[i], in_la);
-
-            }
-        }
-        while( !arrayEquals(in_la,in_prev) || !arrayEquals(out_la,out_prev) );
-
-
-        for(int i=1;i<successor.length;i++)
-        {
-            System.out.println("in[ " + i + "] = " + in_la[i]);
-            System.out.println("out[ " + i + "] = " + out_la[i]);
-            System.out.println("\n\n");
-        }
-
-    }
 }
-

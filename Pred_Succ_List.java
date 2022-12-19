@@ -27,12 +27,18 @@ public class Pred_Succ_List {
                 if(root.exit instanceof DecisionNode)
                 {
                     //System.out.println("Next is dec node ");
-                    predecessor[((DecisionNode) root.exit).ifNode.node_number].add((DecisionNode) ((DecisionNode) root).ifNode);
+                    /*predecessor[((DecisionNode) root.exit).ifNode.node_number].add((DecisionNode) ((DecisionNode) root).ifNode);
                     predecessor[((DecisionNode) root.exit).elseNode.node_number].add((DecisionNode) ((DecisionNode) root).ifNode);
 
                     predecessor[((DecisionNode) root.exit).ifNode.node_number].add((DecisionNode) ((DecisionNode) root).elseNode);
                     predecessor[((DecisionNode) root.exit).elseNode.node_number].add((DecisionNode) ((DecisionNode) root).elseNode);
+                    */
 
+                    predecessor[((DecisionNode) root.exit).predicate.node_number].add((DecisionNode) ((DecisionNode) root).ifNode);
+                    predecessor[((DecisionNode) root.exit).predicate.node_number].add((DecisionNode) ((DecisionNode) root).elseNode);
+
+                    predecessor[((DecisionNode) root.exit).ifNode.node_number].add((DecisionNode) ((DecisionNode) root.exit).predicate);
+                    predecessor[((DecisionNode) root.exit).elseNode.node_number].add((DecisionNode) ((DecisionNode) root.exit).predicate);
 
                     //System.out.println("Updated  "+ predecessor[((DecisionNode) root.exit).ifNode.node_number]+"  "
                       ////      + predecessor[((DecisionNode) root.exit).elseNode.node_number]+
@@ -55,11 +61,11 @@ public class Pred_Succ_List {
                         {
                             if(temp.exit instanceof DecisionNode)
                             {
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).ifNode);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).ifNode);
+                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp.exit).predicate);
+                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp.exit).predicate);
 
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).elseNode);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).elseNode);
+                                predecessor[((DecisionNode) temp.exit).predicate.node_number].add( ((DecisionNode) temp).ifNode);
+                                predecessor[((DecisionNode) temp.exit).predicate.node_number].add( ((DecisionNode) temp).elseNode);
                                 temp=temp.exit;
                             }
                             else if(temp.exit instanceof CFGNode)
@@ -73,8 +79,9 @@ public class Pred_Succ_List {
                         {
                             if(temp.exit instanceof DecisionNode)
                             {
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( temp);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(temp);
+                                predecessor[((DecisionNode) temp.exit).predicate.node_number].add( temp);
+                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp.exit).predicate);
+                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(((DecisionNode) temp.exit).predicate);
                             }
                             else if(temp.exit instanceof CFGNode)
                             {
@@ -93,11 +100,11 @@ public class Pred_Succ_List {
                     {
                         if(temp.exit instanceof DecisionNode)
                         {
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).ifNode);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).ifNode);
+                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp.exit).predicate);
+                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp.exit).predicate);
 
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).elseNode);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).elseNode);
+                            predecessor[((DecisionNode) temp.exit).predicate.node_number].add( ((DecisionNode) temp).ifNode);
+                            predecessor[((DecisionNode) temp.exit).predicate.node_number].add( ((DecisionNode) temp).elseNode);
 
                         }
                         else if(temp.exit instanceof CFGNode)
@@ -110,8 +117,9 @@ public class Pred_Succ_List {
                     {
                         if(temp.exit instanceof DecisionNode)
                         {
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( temp);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(temp);
+                            predecessor[((DecisionNode) temp.exit).predicate.node_number].add( temp);
+                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp.exit).predicate);
+                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(((DecisionNode) temp.exit).predicate);
                         }
                         else if(temp.exit instanceof CFGNode)
                         {
@@ -147,8 +155,9 @@ public class Pred_Succ_List {
                 if(root.exit instanceof DecisionNode)
                 {
                     //System.out.println("Next is dec node ");
-                    predecessor[((DecisionNode) root.exit).ifNode.node_number].add(root);
-                    predecessor[((DecisionNode) root.exit).elseNode.node_number].add(root);
+                    predecessor[((DecisionNode) root.exit).predicate.node_number].add(root);
+                    predecessor[((DecisionNode) root.exit).ifNode.node_number].add(((DecisionNode) root.exit).predicate);
+                    predecessor[((DecisionNode) root.exit).elseNode.node_number].add(((DecisionNode) root.exit).predicate);
 
                     //System.out.println("Updated  "+ predecessor[((DecisionNode) root.exit).ifNode.node_number]+"  "
                       ////      + predecessor[((DecisionNode) root.exit).elseNode.node_number]+
@@ -173,11 +182,11 @@ public class Pred_Succ_List {
                             if(temp.exit instanceof DecisionNode)
                             {
 
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).ifNode);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).ifNode);
+                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp.exit).predicate);
+                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp.exit).predicate);
 
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).elseNode);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).elseNode);
+                                predecessor[((DecisionNode) temp.exit).predicate.node_number].add( ((DecisionNode) temp).ifNode);
+                                predecessor[((DecisionNode) temp.exit).predicate.node_number].add( ((DecisionNode) temp).elseNode);
 
                                 //System.out.println("Next node is dec node\n Updated , pre["+((DecisionNode) temp.exit).ifNode.node_number +"] = "+predecessor[((DecisionNode) temp.exit).ifNode.node_number]+"  pre[ "+((DecisionNode) temp.exit).elseNode.node_number+"]=  "+predecessor[((DecisionNode) temp.exit).elseNode.node_number]);
 
@@ -196,8 +205,9 @@ public class Pred_Succ_List {
                         {
                             if(temp.exit instanceof DecisionNode)
                             {
-                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( temp);
-                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(temp);
+                                predecessor[((DecisionNode) temp.exit).predicate.node_number].add( temp);
+                                predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp.exit).predicate);
+                                predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(((DecisionNode) temp.exit).predicate);
                                 //System.out.println("Next node is dec node\n Updated , pre["+((DecisionNode) temp.exit).ifNode.node_number +"] = "+predecessor[((DecisionNode) temp.exit).ifNode.node_number]+"  pre[ "+((DecisionNode) temp.exit).elseNode.node_number+"]=  "+predecessor[((DecisionNode) temp.exit).elseNode.node_number]);
 
                             }
@@ -220,11 +230,11 @@ public class Pred_Succ_List {
                     {
                         if(temp.exit instanceof DecisionNode)
                         {
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).ifNode);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).ifNode);
+                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp.exit).predicate);
+                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp.exit).predicate);
 
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp).elseNode);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add( ((DecisionNode) temp).elseNode);
+                            predecessor[((DecisionNode) temp.exit).predicate.node_number].add( ((DecisionNode) temp).ifNode);
+                            predecessor[((DecisionNode) temp.exit).predicate.node_number].add( ((DecisionNode) temp).elseNode);
 
                             //System.out.println("Next node is dec node\n Updated , pre["+((DecisionNode) temp.exit).ifNode.node_number +"] = "+predecessor[((DecisionNode) temp.exit).ifNode.node_number]+"  pre[ "+((DecisionNode) temp.exit).elseNode.node_number+"]=  "+predecessor[((DecisionNode) temp.exit).elseNode.node_number]);
 
@@ -242,8 +252,9 @@ public class Pred_Succ_List {
                     {
                         if(temp.exit instanceof DecisionNode)
                         {
-                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( temp);
-                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(temp);
+                            predecessor[((DecisionNode) temp.exit).predicate.node_number].add(temp);
+                            predecessor[((DecisionNode) temp.exit).ifNode.node_number].add( ((DecisionNode) temp.exit).predicate);
+                            predecessor[((DecisionNode) temp.exit).elseNode.node_number].add(((DecisionNode) temp.exit).predicate);
                             //System.out.println("Next node is dec node\n Updated , pre["+((DecisionNode) temp.exit).ifNode.node_number +"] = "+predecessor[((DecisionNode) temp.exit).ifNode.node_number]+"  pre[ "+((DecisionNode) temp.exit).elseNode.node_number+"]=  "+predecessor[((DecisionNode) temp.exit).elseNode.node_number]);
 
                         }
